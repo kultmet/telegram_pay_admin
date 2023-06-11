@@ -4,7 +4,6 @@ from pydantic import BaseModel
 
 
 class UserRequest(BaseModel):
-    
     id: int
     is_bot: bool
     first_name: str = None
@@ -15,6 +14,7 @@ class UserRequest(BaseModel):
 class UserResponse(UserRequest):
     is_admin: bool
     total_ballance: int
+
     class Config:
         orm_mode = True
 
@@ -31,6 +31,7 @@ class PaymentResponse(BaseModel):
     username: str
     total_amount: int
     timestamp: datetime
+
     class Config:
         orm_mode = True
 

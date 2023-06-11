@@ -1,11 +1,21 @@
 from typing import List
 from fastapi import APIRouter, Depends
-from sqlalchemy import exists, select, update
+from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.admin.db import BlackList, Payment, User
-from src.admin.schemas import BallanceRequest, BlackListexistsResponse, PaymentRequest, PaymentResponse, UserExistsResponse, UserRequest, UserResponse
-from src.admin.utils import save_blacklist_object, save_payment, save_user, update_ballance
+from src.admin.schemas import (
+    BallanceRequest,
+    BlackListexistsResponse,
+    PaymentRequest,
+    PaymentResponse,
+    UserExistsResponse,
+    UserRequest,
+    UserResponse
+)
+from src.admin.utils import (
+    save_blacklist_object, save_payment, save_user, update_ballance
+)
 from src.database import get_async_session
 
 admin_router = APIRouter()
@@ -35,10 +45,13 @@ async def get_users(session: AsyncSession = Depends(get_async_session)):
     path='/users/{user_id}/exists/',
     tags=['Users']
 )
-async def exists_user(user_id: int, session: AsyncSession = Depends(get_async_session)):
-    result = await session.execute(exists(User).where(User.id==user_id).select())
+async def exists_user(
+    user_id: int, session: AsyncSession = Depends(get_async_session)
+):
+    result = await session.execute(
+        exists(User).where(User.id == user_id).select()
+    )
     return UserExistsResponse(exists=result.scalar())
-    
 
 
 @admin_router.post(
@@ -47,21 +60,26 @@ async def exists_user(user_id: int, session: AsyncSession = Depends(get_async_se
     response_model=UserRequest,
     status_code=201
 )
-async def create_user(user: UserRequest, session: AsyncSession = Depends(get_async_session)):
+async def create_user(
+    user: UserRequest, session: AsyncSession = Depends(get_async_session)
+):
     await save_user(session, user)
     return user
 
 
 @admin_router.get(
     path='/users/{user_id}/payments/',
-    tags=['Payments'] 
+    tags=['Payments']
 )
-async def get_user_payments(user_id: int, session: AsyncSession = Depends(get_async_session)):
+async def get_user_payments(
+    user_id: int, session: AsyncSession = Depends(get_async_session)
+):
     paymens = await session.execute(
         select(User.id, User.username, Payment.total_amount, Payment.timestamp)
         .join(User.payments).where(Payment.user_id == user_id)
     )
     return [PaymentResponse.from_orm(payment) for payment in paymens]
+
 
 @admin_router.post(
     path='/users/{user_id}/payments/',
@@ -92,7 +110,9 @@ async def change_ballance(
     tags=['Blacklist'],
     status_code=201
 )
-async def add_to_blacklist(user_id: int, session: AsyncSession = Depends(get_async_session)):
+async def add_to_blacklist(
+    user_id: int, session: AsyncSession = Depends(get_async_session)
+):
     await save_blacklist_object(session, user_id)
     return {'message': 'Пользователь заблокирован'}
 
@@ -102,8 +122,12 @@ async def add_to_blacklist(user_id: int, session: AsyncSession = Depends(get_asy
     tags=['Blacklist'],
     status_code=201
 )
-async def exists_blacklist_object(user_id: int, session: AsyncSession = Depends(get_async_session)):
-    result = await session.execute(exists(BlackList).where(BlackList.user_id==user_id).select())
+async def exists_blacklist_object(
+    user_id: int, session: AsyncSession = Depends(get_async_session)
+):
+    result = await session.execute(
+        exists(BlackList).where(BlackList.user_id == user_id).select()
+    )
     return BlackListexistsResponse(exists=result.scalar())
 
 
@@ -114,5 +138,4 @@ async def exists_blacklist_object(user_id: int, session: AsyncSession = Depends(
 )
 async def get_blacklist(session: AsyncSession = Depends(get_async_session)):
     result = await session.execute(select(BlackList.user_id))
-    # print(result.scalar())
     return result.scalars().all()
